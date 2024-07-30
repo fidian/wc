@@ -36,7 +36,7 @@ bun install @fidian/wc
 
 Once installed, your code can use it via an import
 
-```
+```js
 import { Wc, html } from '@fidian/wc';
 
 customElements.define('test-component', class extends Wc {
@@ -226,7 +226,7 @@ When variables are injected into the template, they will be evaluated using the 
 * If the value is an array, append each string or `Parsed` object in the array to the result.
 * Finally, convert the value to a string and append it to the result.
 
-```
+```js
 // Sample class to illustrate the examples
 class extends Wc {
     delay = 5;
