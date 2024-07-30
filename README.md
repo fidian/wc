@@ -461,6 +461,7 @@ This project is only possible due to the heroic work done by [pin705](https://gi
 * Added several tests, using Cypress to run them within real browsers.
 * Broke out internals and exported them separately so outside tools can leverage them as well.
 * Allow attaching to any event names, not just ones supported via element attributes, allowing communication out from custom web components via events.
+* Removed the automatic binding of context for functions, which means switching from `onclick=${this.handler}` to `onclick=${() => this.handler()}`.
 
 
 License
