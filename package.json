@@ -1,0 +1,47 @@
+{
+    "name": "@fidian/wc",
+    "version": "1.0.0",
+    "description": "Really, really minimal custom element framework for making web components.",
+    "keywords": [
+        "nano",
+        "micro",
+        "web-component",
+        "web",
+        "component",
+        "tiny",
+        "framework"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/fidian/wc.git"
+    },
+    "homepage": "https://github.com/fidian/wc",
+    "author": "Tyler Akins <fidian@rumkin.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/fidian/wc/issues"
+    },
+    "scripts": {
+        "build": "scripts/build",
+        "build:unminified": "scripts/build-unminified",
+        "reinstall": "rm -rf node_modules/ package-lock.json && npm install",
+        "test": "scripts/test",
+        "test:interactive": "cypress open --component"
+    },
+    "main": "dist/wc.js",
+    "module": "dist/wc.mjs",
+    "unpkg": "dist/wc.umd.min.js",
+    "type": "module",
+    "types": "dist/wc.d.ts",
+    "devDependencies": {
+        "@types/jsdom": "^21.1.7",
+        "@types/node": "^22.0.0",
+        "cypress": "^13.13.1",
+        "cypress-ct-custom-elements": "^1.0.0",
+        "rollup": "^4.18.1",
+        "terser": "^5.31.3",
+        "tsx": "^4.16.2",
+        "typescript": "^5.5.3",
+        "vite": "^5.3.4"
+    }
+}

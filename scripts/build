@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -eEu -o pipefail
+
+status() {
+    echo "### $1"
+}
+
+sizeAsJson() {
+    local desc="$1" filename="$2"
+    local line
+    line="{ \"name\": \"$desc\", \"minified\": $(wc -c < dist/"$filename"), \"gzipped\": $(wc -c < dist/"$filename".gz) }"
+    echo "$line"
+}
+
+runTerser() {
+    terser --mangle-props regex=/^_/ --ecma 6 --compress --mangle --module ${@+"$@"}
+}
+
+status "Clean"
+rm -rf dist/
+
+status "Compile"
+tsc
+
+status "Build module"
+rollup dist/index.js --file dist/wc.mjs --format esm
+runTerser --module -o dist/wc.min.mjs dist/wc.mjs
+gzip -9 -c dist/wc.min.mjs > dist/wc.min.mjs.gz
+
+status "Build UMD"
+rollup dist/index.js --file dist/wc.umd.js --format umd --name wc
+runTerser -o dist/wc.umd.min.js dist/wc.umd.js
+gzip -9 -c dist/wc.umd.min.js > dist/wc.umd.min.js.gz
+
+ls -l dist/wc.min.mjs dist/wc.min.mjs.gz dist/wc.umd.min.js dist/wc.umd.min.js.gz

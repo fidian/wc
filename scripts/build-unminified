@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -eEu -o pipefail
+
+status() {
+    echo "### $1"
+}
+
+status "Clean"
+rm -rf dist/
+
+status "Compile"
+tsc
+
+status "Bundle module"
+rollup dist/f.js --file dist/f.mjs --format esm
+
+status "Update docs"
+cp dist/f.mjs docs/f.min.js
