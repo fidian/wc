@@ -10,7 +10,7 @@ Features
 * Full TypeScript support.
 * Internals are exposed so they can be leveraged by other tools.
 * No dependencies.
-* *Super small!* 1.1k gzipped (1140 bytes when last checked)
+* *Super small!* 1.1k gzipped (1137 bytes when last checked)
 * Automatic updates based on state changes. Code is from [@pinjs/cona], which was inspired by Vue.
 * HTML template literals for values and event bindings.
 * DOM diffing and updates instead of complete replacement.

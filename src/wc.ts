@@ -4,7 +4,6 @@
  */
 
 import { apply } from './apply';
-import { html } from './html';
 import { Parsed } from './parsed';
 
 export interface State {
@@ -59,7 +58,7 @@ export class Wc extends HTMLElement {
     }
 
     private _update() {
-        apply(this, (this.render?.()??html``).b(this));
+        apply(this, (this.render?.()??new Parsed()).b(this));
         this.onUpdate?.();
     }
 }
