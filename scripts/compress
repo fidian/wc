@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-set -eEu -o pipefail
-
-ROLLED_UP=$(npx rollup "$1" --format esm)
-MIN=$(echo "$ROLLED_UP" | npx terser --ecma 6 --compress --mangle --module /dev/stdin )
-echo "$MIN"
-echo "$MIN" | wc -c
-echo "$MIN" | gzip -9 -c | wc -c
