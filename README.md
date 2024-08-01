@@ -558,7 +558,7 @@ This project is only possible due to the heroic work done by [pin705](https://gi
 * Removed support for `.watch()` and `.computed()`, which were helper methods to call `.effect()`.
 * Added several tests, using Cypress to run them within real browsers.
 * Broke out internals and exported them separately so outside tools can leverage them as well. This means some portions are tree-shakeable, making a rebundle potentially smaller.
-* Allow attaching to any event names, not just ones supported via element attributes, allowing communication out from custom web components via events.
+* Allow attaching to any event names, not just ones supported via element attributes. Also added `.emit()` to send events. This allows Wc-flavored web components to have bidirectional communication with other web components.
 
 
 License
