@@ -4,43 +4,22 @@
  */
 
 import { apply } from './apply';
-import { each } from './each';
 import { html } from './html';
 import { Parsed } from './parsed';
-
-export type EffectCallback = (newValue: any, oldValue: any) => void;
-export type EffectFunction = () => any;
-
-export type RefObject<T> = {
-    ref: T;
-};
 
 export interface State {
     [key: string]: any;
 }
 
-interface EffectInfo {
-    c: EffectCallback;
-    v: any;
-}
-
 export class Wc extends HTMLElement {
-    private _effects: Map<EffectFunction, EffectInfo>;
-    private _timeout: ReturnType<typeof requestAnimationFrame> | null;
+    private _timeout?: ReturnType<typeof requestAnimationFrame> | null;
 
     // Lifecycle methods
-    public onSetup?(): void;
-    public onInit?(): void;
-    public onMount?(): void;
-    public onUnmount?(): void;
-    public onUpdate?(): void;
-
-    constructor() {
-        super();
-        this._effects = new Map();
-        this._timeout = null;
-        this.onSetup?.();
-    }
+    onInit?(): void;
+    onMount?(): void;
+    onUnmount?(): void;
+    onUpdate?(): void;
+    render?(): Parsed;
 
     connectedCallback() {
         this.onInit?.();
@@ -52,15 +31,13 @@ export class Wc extends HTMLElement {
         this.onUnmount?.();
     }
 
-    effect(valueFn: EffectFunction, c: EffectCallback) {
-        this._effects.set(valueFn, { c, v: valueFn() });
-    }
-
     emit(event: string, detail?: any, options: CustomEventInit = {}) {
-        this.dispatchEvent(new CustomEvent(event, {
-            ...options,
-            detail
-        }));
+        this.dispatchEvent(
+            new CustomEvent(event, {
+                ...options,
+                detail,
+            })
+        );
     }
 
     reactive<T extends State>(state: T): T {
@@ -69,41 +46,20 @@ export class Wc extends HTMLElement {
                 if (target[key as keyof T] !== value) {
                     target[key as keyof T] = value;
 
-                    if (!this._timeout) {
-                        this._timeout = requestAnimationFrame(() => {
-                            this._timeout = null;
-                            this._update();
-                        });
-                    }
+                    this._timeout ??= requestAnimationFrame(() => {
+                        this._timeout = null;
+                        this._update();
+                    });
                 }
 
                 return true;
             },
-            get: (target, key: string | symbol) => {
-                return target[key as keyof T];
-            },
+            get: (target, key: string | symbol) => target[key as keyof T],
         });
-    }
-
-    ref<T>(ref: T): RefObject<T> {
-        return { ref };
-    }
-
-    render(): Parsed {
-        return html``;
     }
 
     private _update() {
-        apply(this, this.render());
+        apply(this, (this.render?.()??html``).b(this));
         this.onUpdate?.();
-
-        each(this._effects, ([valueFn, info]) => {
-            const newValue = valueFn();
-
-            if (info.v !== newValue) {
-                info.c(newValue, info.v);
-                info.v = newValue;
-            }
-        });
     }
 }

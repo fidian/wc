@@ -17,22 +17,21 @@ export const html = (
 ): Parsed => {
     const result = new Parsed();
     each(strings, (str) => {
-        result.s += str;
+        result.a(str);
         const value = values.shift();
 
         if (/\s(p:\S+|on\S+|ref)=$/.test(str)) {
             // Functions and references
-            mapKey += 1;
             result.v[mapKey] = value;
-            result.s += mapKey;
+            result.a(mapKey++);
         } else if (str.endsWith('=')) {
             // Unlike the text, attributes are escaped when set without quotes.
-            result.s += `"${attr(value)}"`;
+            result.a(`"${attr(value)}"`);
         } else {
             // Convert everything else to strings. If it's an array, convert
             // elements to strings or HtmlParsed objects and merge into one.
             each([].concat(value), (v) => {
-                result.append(v ?? '');
+                result.a(v??'')
             })
         }
     });

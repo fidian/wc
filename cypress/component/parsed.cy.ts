@@ -8,7 +8,7 @@ describe('Parsed', () => {
     });
     it('appends a string', () => {
         const p = new Parsed();
-        p.append('hello');
+        p.a('hello');
         expect(p.s).to.equal('hello');
         expect(Object.keys(p.v).length).to.equal(0);
     });
@@ -21,7 +21,7 @@ describe('Parsed', () => {
         child.s = 'CHILD';
         child.v = { 2: 'CHILD', 3: 'CHILD' };
 
-        parent.append(child);
+        parent.a(child);
 
         expect(parent.s).to.equal('PARENTCHILD');
 

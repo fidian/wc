@@ -4,7 +4,8 @@
         "lib": ["dom", "es2019"],
         "moduleResolution": "nodenext",
         "target": "esNext",
-        "types": ["cypress", "node"]
+        "types": ["cypress", "node"],
+        "useDefineForClassFields": false
     },
     "include": ["**/*.ts"]
 }

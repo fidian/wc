@@ -1,6 +1,6 @@
 {
     "name": "@fidian/wc",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Really, really minimal custom element framework for making web components.",
     "keywords": [
         "nano",
@@ -26,7 +26,8 @@
         "build:unminified": "scripts/build-unminified",
         "reinstall": "rm -rf node_modules/ package-lock.json && npm install",
         "test": "scripts/test",
-        "test:interactive": "cypress open --component"
+        "test:interactive": "cypress open --component",
+        "tokens": "cat dist/wc.min.mjs | tr -c 'a-zA-Z0-9' '\\n' | grep . | sort | uniq -c | sort -n"
     },
     "main": "dist/wc.js",
     "module": "dist/wc.mjs",

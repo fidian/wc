@@ -10,8 +10,8 @@ Features
 * Full TypeScript support.
 * Internals are exposed so they can be leveraged by other tools.
 * No dependencies.
-* *Super small!* 1.1k gzipped (1096 bytes when last checked)
-* Automatic updates based on state changes, inspired by Vue.
+* *Super small!* 1.1k gzipped (1140 bytes when last checked)
+* Automatic updates based on state changes. Code is from [@pinjs/cona], which was inspired by Vue.
 * HTML template literals for values and event bindings.
 * DOM diffing and updates instead of complete replacement.
 * Support for binding to custom elements.
@@ -82,15 +82,14 @@ Scripts can now be loaded as modules, which are fun.
 </script>
 ```
 
-Example
--------
+Counter Example
+---------------
 
 ```js
 import { html, text, Wc } from '@fidian/wc';
 
 customElements.define('my-counter', class extends Wc {
-    // onSetup is called when the element is constructed
-    onSetup() {
+    constuctor() {
         // Create a component state. Updates to any property in this state will
         // automatically trigger view updates. The property values are only
         // checked shallowly.
@@ -100,11 +99,15 @@ customElements.define('my-counter', class extends Wc {
 
         // This shows how you can get a DOM reference
         this.pRef = this.ref();
+    }
 
+    // onInit is called when the element is being attached but before the first
+    // render has completed.
+    onInit() {
         // An effect is something whose value can change. When it changes, call
-        // the callback. Effects are only checked when rendered, so a state
-        // change needs to happen first.
-        this.effect(
+        // the callback. Effects need to be checked. See onUpdate().
+        this.effects = new Effects();
+        this.effects.add(
             // A callback to return the current value
             () => this.state.count,
             // When changed, call this callback
@@ -114,22 +117,20 @@ customElements.define('my-counter', class extends Wc {
         );
     }
 
-    // When the element is attached
-    onInit() {
-        console.log('Initialized');
-    }
-
     // When the element's first render is done
     onMount() {
         console.log('Mounted');
     }
 
-    // When the view is updated
+    // When the view has been updated
     onUpdate() {
         console.log('Updated');
 
         // Showing how to get the DOM element referenced in the template
         console.log('P ref', this.pRef?.ref);
+
+        // Check effects whenever the state changes
+        this.effects.check();
     }
 
     // When the element is removed from the DOM
@@ -165,11 +166,107 @@ customElements.define('my-counter', class extends Wc {
                 <p ref=${this.pRef}>
                     Name: ${text(this.state.count)}
                 </p>
-                <button onclick=${() => this.addCount()}>
+                <button onclick=${this.addCount}>
                     Add count
                 </button>
                 <my-counter-child p:count=${this.state.count + 5}>
                 </my-counter-child>
+            </div>
+        `;
+    }
+});
+```
+
+Events, Attributes, and Properties Example
+------------------------------------------
+
+Web components are expected to receive input via attributes and properties, and communicate back out to parents via events. Here is an example that shows how to use all of these techniques.
+
+```js
+import { Wc, html, text } from '@fidian/wc';
+
+customElements.define('list-parent', class extends Wc {
+    onSetup() {
+        this.itemId = 0;
+        this.state = this.reactive({
+            items: [],
+            manualUpdates: 0, // Trigger to cause updates
+        });
+    }
+
+    newItem() {
+        // Does not change the array reference, so this will not trigger an
+        // update.
+        this.state.items.push({
+            label: `Item ${this.itemId}`,
+            value: Math.random()
+        });
+
+        // Manually trigger an update.
+        this.state.manualUpdates ++;
+    }
+
+    changeLabels() {
+        // This does change the array reference and automatically triggers
+        // an update.
+        this.state.items = this.state.items.map(
+            (item) => { item.label = `Changed ${item.label}` }
+        );
+    }
+
+    removeItem(item) {
+        // No need to trigger a manual update since the array reference is
+        // changed.
+        this.state.items = this.state.items.filter(x => x !== item);
+    }
+
+    render() {
+        return html`
+            <button onclick=${this.newItem}>New Item</button>
+            <button onclick=${this.changeLabels}>Change Labels</button>
+            ${this.state.items.map((item) => html`
+                <list-item
+                    item-label=${item.label}
+                    p:item-value=${item.value}
+                    onremoveitem=${() => this.removeItem(item)}
+                ></list-item>
+            `)}
+        `;
+    }
+});
+
+// Label is an attribute that could change.
+//     <list-item item-label="Label">
+// Value is a number assigned to a propety on the element.
+//     const item = document.getElementsByTagName('list-item')[0];
+//     item.itemValue = 123;
+customElements.define('list-item', class extends Wc {
+    static observedAttributes = ['item-label'];
+
+    onSetup() {
+        this.state = this.reactive({
+            label: this.getAttribute('item-label') ?? 'Unknown',
+            value: 0
+        });
+    }
+
+    // Watch for attribute changes
+    attributeChangedCallback(name, _oldValue, newValue) {
+        if (name === 'item-label') {
+            this.state.label = newValue;
+        }
+    }
+
+    // Watch for property changes
+    set itemValue(value: number) {
+        this.state.value = value;
+    }
+
+    render() {
+        return html`
+            <div>
+                ${text(this.state.label)} (Last update: ${text(this.state.value)})
+                <button onclick=${() => this.emit('removeitem')}>Remove</button>
             </div>
         `;
     }
@@ -192,12 +289,12 @@ const text = window.wc.text;
 
 ### `apply(parent: HTMLElement, parsed: Parsed)`
 
-Apply the given parsed HTML and mapped data values to the DOM. If you are going to use `html` yourself, then use this function to update the DOM.
+Apply the given parsed HTML and mapped data values to the DOM. If you are going to use `html` yourself, then use this function to update the DOM. The call to `parsed.b()` will bind all functions to `this`, setting their contexts.
 
 ```js
 const counter = 1;
 const parsed = html`<div>${counter}</div>`;
-apply(document.getElementById('target-element'), parsed);
+apply(document.getElementById('target-element'), parsed.b(this));
 ```
 
 ### `attr(value: string): string`
@@ -208,6 +305,28 @@ Escape a value so it is safe to embed as an attribute. This is used automaticall
 const escaped = attr('A "great" value');
 document.body.innerHTML = `<custom-element value="${escaped}"></custom-element>`;
 ````
+
+## `new Effects()`
+
+Create a new Effects object that detects changes and will call callbacks when changes are detected. If you don't use this, the class is tree-shakeable and will be removed from the build.
+
+```js
+// Create an instance, most likely in your onSetup of your component.
+this.effects = new Effects();
+
+// Add an effect
+this.effects.add(
+    // The value getter, which returns any value.
+    () => this.count,
+    // When the value changes, call the callback.
+    (newValue, oldValue) => {
+        console.log('Count is', newValue, ' - was ', oldValue);
+    }
+);
+
+// In your onUpdate method, check for effect updates.
+this.effects.check();
+```
 
 ### `html(strings: TemplateStringsArray, ...values: any[]): Parsed`
 
@@ -227,25 +346,17 @@ When variables are injected into the template, they will be evaluated using the 
 * Finally, convert the value to a string and append it to the result.
 
 ```js
-// Sample class to illustrate the examples
-class extends Wc {
-    delay = 5;
-    username = 'timmy';
+// Correct event binding, using just the method
+html`<div onclick=${this.handler}>Click me</div>`
 
-    clickHandler() {
-        console.log('Click handler');
-    }
+// Correct event binding, using an arrow function
+html`<div onclick=${() => this.handler()}>Click me</div>`
 
-    render() {
-        return html`INSERT EXAMPLE HERE - SEE BELOW`;
-    }
-}
-
-// Correct event binding
-html`<div onclick=${() => this.clickHandler()}>Click me</div>`
+// Correct event binding with extra parameters passed
+html`<div onclick=${(event) => this.handler(event, this.data)}>Click me</div>`
 
 // Incorrect - do not use quotation marks
-html`<div onclick="${() => this.clickHandler()}">Click me</div>`
+html`<div onclick="${this.handler}">Click me</div>`
 
 // Correct escaping of HTML
 html`Username: ${text(this.username)}`;
@@ -302,7 +413,7 @@ const things = ['apple', html`<span onclick=${click}>orange</span>`];
 for (const thing of things) {
     // The first item is a string, apple
     if (typeof thing === 'string') {
-        joined.append(thing);
+        joined.a(thing);
 
         console.log(joined.s); // apple
         console.log(joined.v); // {}
@@ -317,10 +428,15 @@ for (const thing of things) {
 }
 ```
 
+The values that are functions can also all be bound to a specific context.
+
+```
+parsed.b(this);
+```
 
 ### `text(value: string): string`
 
-Escapes a value so it is safe to embed into HTML.
+Escapes a value so it is safe to embed into HTML. If you do not use this to escape text safely, you should probably reconsider what you're doing. However, if this function isn't used then it is tree-shakeable.
 
 ```js
 // This is malicious data
@@ -343,10 +459,6 @@ customElements.define('test-component', class extends Wc {
 
 This is the nano-framework for a new web component.
 
-**`this.onSetup()`**
-
-Called when constructed. There will be no DOM attached at this point, no attributes set, nothing.
-
 **`this.onInit()`**
 
 Element is added to the DOM but not rendered. Remember, the element might get detached and reattached multiple times when other code changes the DOM structure.
@@ -362,19 +474,6 @@ Element is being removed from the DOM. This is as close as you can get to a dest
 **`this.onUpdate()`**
 
 A state change has triggered an update and the update has been performed.
-
-**`this.effect(valueFn, effectCallback)`**
-
-On updates, check if the value function returns a different value. If so, call the callback.
-
-* `valueFn: () => any` - Provides the current value of something.
-* `effectCallback: (newValue, oldValue) => void - When the value changes, call this callback and pass both the new and old values.
-
-```js
-this.effect(() => this.count, (newValue, oldValue) => {
-    console.log('Count changed from', oldValue, 'to', newValue);
-});
-```
 
 **`this.emit(name, detail?, options?)`**
 
@@ -424,7 +523,7 @@ Create a reference object that will get updated on updates when there's an eleme
 
 ```js
 customElements.define('my-element', class extends Wc {
-    onSetup() {
+    onInit() {
         this.divRef = this.ref();
     }
 
@@ -448,23 +547,23 @@ Warnings and Cautions
 
 Remember, your element is still a subclass of [`HTMLElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement), so avoid overriding built-in methods, such as [`.remove()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/remove). Failure to do so will cause unintended (usually catastrophic) problems.
 
-There's no way to manually trigger updates by calling a method. If you work with deep objects, you can use immutable objects or update any property in your state. One easy way to do that is simply to keep a counter and increment it as necessary. This is not needed at all when using a shallow object for state.
+There's no way to manually trigger updates by calling a method. If you work with deep objects, you can use immutable objects or update any property in your state. One easy way to do that is simply to keep a counter and increment it as necessary. This is not needed when using a shallow object for state.
 
 
 Acknowledgments
 ---------------
 
-This project is only possible due to the heroic work done by [pin705](https://github.com/pin705) and his project, [@pinjs/cona](https://github.com/pin705/cona). If you like what you see here, it's only possible due to this previous work. The main changes from the original version to this one include the following list.
+This project is only possible due to the heroic work done by [pin705](https://github.com/pin705) and his project, [@pinjs/cona]. If you like what you see here, it's only possible due to this previous work. The main changes from the original version to this one include the following list.
 
 * Removed support for `.watch()` and `.computed()`, which were helper methods to call `.effect()`.
-* Removed support for `.setup()`, `.onUpdated()`, `.onMounted()`, and `.onUnmounted()` to minify better. These can be achieved by overriding `.connectedCallback()` (and similar methods).
 * Added several tests, using Cypress to run them within real browsers.
-* Broke out internals and exported them separately so outside tools can leverage them as well.
+* Broke out internals and exported them separately so outside tools can leverage them as well. This means some portions are tree-shakeable, making a rebundle potentially smaller.
 * Allow attaching to any event names, not just ones supported via element attributes, allowing communication out from custom web components via events.
-* Removed the automatic binding of context for functions, which means switching from `onclick=${this.handler}` to `onclick=${() => this.handler()}`.
 
 
 License
 -------
 
 Published under the [MIT](https://github.com/pin705/cf-scraper-bypass/blob/main/LICENSE) license.
+
+[@pinjs/cona]: https://github.com/pin705/cona

@@ -17,8 +17,7 @@ customElements.define(
             updateCount: number;
         };
 
-        constructor() {
-            super();
+        onInit() {
             this.state = this.reactive({
                 counters: [],
                 updateCount: 0, // silly trigger to cause updates
@@ -32,34 +31,34 @@ customElements.define(
                 label: `Counter ${counterId}`,
                 value: 0,
             });
-            this.state.updateCount ++;
+            this.state.updateCount++;
         }
 
         changeLabels() {
             for (const counter of this.state.counters) {
                 counter.label = `Changed ${counter.label}`;
             }
-            this.state.updateCount ++;
+            this.state.updateCount++;
         }
 
         incrementCounter(counter: CounterInfo) {
             counter.value += 1;
-            this.state.updateCount ++;
+            this.state.updateCount++;
         }
 
         removeCounter(counter: CounterInfo) {
             this.state.counters = this.state.counters.filter(
                 c => c !== counter
             );
-            this.state.updateCount ++;
+            this.state.updateCount++;
         }
 
         render() {
             return html`
-                <button id="new-counter" onclick=${() => this.newCounter()}>
+                <button id="new-counter" onclick=${this.newCounter}>
                     New Counter
                 </button>
-                <button id="change-labels" onclick=${() => this.changeLabels()}>
+                <button id="change-labels" onclick=${this.changeLabels}>
                     Change Labels
                 </button>
                 ${this.state.counters.map(
@@ -103,9 +102,9 @@ customElements.define(
             });
         }
 
-        // Watching for attribute changes
+        // Watching for attribute changes.
         attributeChangedCallback(name, _oldValue, newValue) {
-            if (name === 'counter-label') {
+            if (name === 'counter-label' && this.state) {
                 this.state.counterLabel = newValue;
             }
         }
@@ -127,9 +126,14 @@ customElements.define(
         render() {
             return html`
                 <div>
-                    <span class="label">${this.state.counterLabel}</span>: <span class="value">${this.state.counterValue}</span>
-                    <button class="increment" onclick=${() => this.increment()}>+1</button>
-                    <button class="remove" onclick=${(e) => this.removeCounter(e)}>Remove</button>
+                    <span class="label">${this.state.counterLabel}</span>:
+                    <span class="value">${this.state.counterValue}</span>
+                    <button class="increment" onclick=${this.increment}>
+                        +1
+                    </button>
+                    <button class="remove" onclick=${this.removeCounter}>
+                        Remove
+                    </button>
                 </div>
             `;
         }
@@ -148,16 +152,25 @@ describe('counters', () => {
     it('adds a counter', () => {
         cy.get('button#new-counter').click();
         cy.get('#counter-count').should('have.text', '1');
-        cy.get('counter-child#counter-1 .label').should('have.text', 'Counter 1');
+        cy.get('counter-child#counter-1 .label').should(
+            'have.text',
+            'Counter 1'
+        );
     });
 
     it('increments a counter and changes labels', () => {
         cy.get('button#new-counter').click();
         cy.get('counter-child#counter-2 button.increment').click();
         cy.get('counter-child#counter-2 .value').should('have.text', '1');
-        cy.get('counter-child#counter-2 .label').should('have.text', 'Counter 2');
+        cy.get('counter-child#counter-2 .label').should(
+            'have.text',
+            'Counter 2'
+        );
         cy.get('button#change-labels').click();
-        cy.get('counter-child#counter-2 .label').should('have.text', 'Changed Counter 2');
+        cy.get('counter-child#counter-2 .label').should(
+            'have.text',
+            'Changed Counter 2'
+        );
     });
 
     it('increments and removes a set of counters', () => {
