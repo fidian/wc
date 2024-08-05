@@ -58,7 +58,7 @@ export class Wc extends HTMLElement {
     }
 
     private _update() {
-        apply(this, (this.render?.()??new Parsed()).b(this));
+        apply(this.shadowRoot || this, (this.render?.()??new Parsed()).b(this));
         this.onUpdate?.();
     }
 }

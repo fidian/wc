@@ -6,3 +6,4 @@ export { html } from './html';
 export { Parsed } from './parsed';
 export { ref, RefObject } from './ref';
 export { text } from './text';
+export { Wcs } from './wcs';

@@ -9,7 +9,7 @@ import { each } from './each';
 import { link } from './link';
 import { Parsed } from './parsed';
 
-export const apply = (parent: HTMLElement, parsed: Parsed): void => {
+export const apply = (parent: HTMLElement | ShadowRoot, parsed: Parsed): void => {
     diff(parent, Document.parseHTMLUnsafe(parsed.s).body);
     link(parent, parsed.v);
 };

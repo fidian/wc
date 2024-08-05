@@ -10,11 +10,12 @@ Features
 * Full TypeScript support.
 * Internals are exposed so they can be leveraged by other tools.
 * No dependencies.
-* *Super small!* 1.1k gzipped (1137 bytes when last checked)
+* *Super small!* about 1k gzipped (1200 bytes when last checked) with everything included.
 * Automatic updates based on state changes. Code is from [@pinjs/cona], which was inspired by Vue.
 * HTML template literals for values and event bindings.
 * DOM diffing and updates instead of complete replacement.
 * Support for binding to custom elements.
+* Tree-shakeable, reducing total bundle size when built with many systems.
 
 Installation
 ------------
@@ -272,6 +273,22 @@ customElements.define('list-item', class extends Wc {
     }
 });
 ```
+
+
+Shadow DOM
+----------
+
+`Wc`-based elements do not use a shadow DOM. When you want to use one, use `Wcs`.
+
+```
+import { Wcs } from 'wc';
+
+customElements.define('my-component', class extends Wcs {
+    // Fill in your render function here
+}
+```
+
+This automatically attaches a shadow DOM during construction, uses the shadow root as the render target, and `.emit()` will now use `composed: true` to have events traverse up outside of the shadow root.
 
 
 API
@@ -558,7 +575,8 @@ This project is only possible due to the heroic work done by [pin705](https://gi
 * Removed support for `.watch()` and `.computed()`, which were helper methods to call `.effect()`.
 * Added several tests, using Cypress to run them within real browsers.
 * Broke out internals and exported them separately so outside tools can leverage them as well. This means some portions are tree-shakeable, making a rebundle potentially smaller.
-* Allow attaching to any event names, not just ones supported via element attributes. Also added `.emit()` to send events. This allows Wc-flavored web components to have bidirectional communication with other web components.
+* Allow attaching to any event names, not just ones supported via element attributes. Also added `.emit()` to send events. This allows `Wc`-flavored web components to have bidirectional communication with other web components.
+* Removed the use of a shadow DOM from the main class.
 
 
 License

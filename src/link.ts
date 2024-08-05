@@ -10,7 +10,7 @@ import { each } from './each';
 
 const storedEvents = Symbol();
 
-export const link = (root: HTMLElement, v: Record<string, any>): void => {
+export const link = (root: HTMLElement | ShadowRoot, v: Record<string, any>): void => {
     each(root.querySelectorAll('*'), node => {
         const events: Record<string, any> =
             (node as any)[storedEvents] || ((node as any)[storedEvents] = {});
