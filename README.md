@@ -11,7 +11,7 @@ Features
 * Internals are exposed so they can be leveraged by other tools.
 * No dependencies.
 * *Super small!* about 1k gzipped (1200 bytes when last checked) with everything included.
-* Automatic updates based on state changes. Code is from [@pinjs/cona], which was inspired by Vue.
+* Automatic updates based on state changes. Code is from [@pinjs/cona], which appears to be based on [nho], which was inspired by Vue.
 * HTML template literals for values and event bindings.
 * DOM diffing and updates instead of complete replacement.
 * Support for binding to custom elements.
@@ -584,4 +584,5 @@ License
 
 Published under the [MIT](https://github.com/pin705/cf-scraper-bypass/blob/main/LICENSE) license.
 
+[nho]: https://github.com/anh-ld/nho
 [@pinjs/cona]: https://github.com/pin705/cona
